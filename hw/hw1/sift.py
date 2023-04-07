@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('image.jpg')
+img = cv2.imread('./images/1/sudoku.png')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-sift = cv2.xfeatures2d.SIFT_create()
+sift = cv2.SIFT_create()
 kp, des = sift.detectAndCompute(gray, None)
 
 img = cv2.drawKeypoints(gray, kp, img)
