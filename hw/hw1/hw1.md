@@ -51,3 +51,4 @@ ransec算法
 
 [(3条消息) opencv学习笔记15: 梯度运算之sobel算子及其函数使用_用sobel算子计算梯度例题_总裁余(余登武)的博客-CSDN博客](https://blog.csdn.net/kobeyu652453/article/details/107149277)
 
+https://zhuanlan.zhihu.com/p/83064609

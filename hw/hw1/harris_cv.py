@@ -16,3 +16,5 @@ img[dst>0.01*dst.max()]=[0,0,255]
 cv2.imshow('dst',img)
 if cv2.waitKey(0) & 0xff == 27:
     cv2.destroyAllWindows()
+
+cv2.imwrite("uttower1_out.png", img)
