@@ -8,6 +8,7 @@ def compute_harris_response(im, sigma=3):
     filters.gaussian_filter(im, (sigma,sigma), (0,1), imx)
     imy = np.zeros(im.shape)
     filters.gaussian_filter(im, (sigma,sigma), (1,0), imy)
+    
 
     # 计算 Harris 矩阵的分量
     Wxx = filters.gaussian_filter(imx*imx,sigma)
