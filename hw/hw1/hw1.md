@@ -27,6 +27,17 @@ ransec算法
 
 <img src="assets/image-20230413160858561.png" alt="image-20230413160858561" style="zoom:25%;" />
 
+harris角点检测
+
+<img src="assets/image-20230414102555820.png" alt="image-20230414102555820" style="zoom:40%;" />
+
+<center>
+    <img src="assets/image-20230414105614280.png" alt="image-20230414105614280" style="zoom:20%;" />
+    <img src="assets/image-20230414105805333.png" alt="image-20230414105805333" style="zoom:35%;" />
+
+
+
+
 
 
 
