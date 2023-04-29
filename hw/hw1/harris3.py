@@ -22,37 +22,35 @@ sobelxy = cv2.addWeighted(sobelx, 0.5, sobely, 0.5, 0)
 
 # here we set w=1, which means we will do nothing
 # but also we set 1 as the size of window, which means window=1x1
+# if window size is bigger than 1x1, then we need to sum the Ix, Iy and Ixy up 
 
 # 5. calculate the eigenvalue and eigenvector of M
 # we use np.linalg.eig(A) to get eigenvalue and eigenvector
 
-# M has to change, M = np.zeros([o.shape[0]-windowSize+1, o.shape[1]-windowSize+1, 2, 2])
-M = np.zeros([o.shape[0], o.shape[1], 2, 2])
-valueM = np.zeros([o.shape[0], o.shape[1], 2, 2])
-R = np.zeros(o.shape)
+windowSize = 1
+M = np.zeros([o.shape[0] - windowSize + 1, o.shape[1] - windowSize + 1, 2, 2])
+valueM = np.zeros([M.shape[0], M.shape[1], 2])
+R = np.zeros([M.shape[0], M.shape[1]])
 k = 0.04
-for i in range(o.shape[0]):
-    for j in range(o.shape[1]):
-        xx = sobelx[i][j] ** 2
-        yy = sobely[i][j] ** 2
-        xy = sobelxy[i][j]
 
-        M[i][j] = np.array([[xx, xy], [xy, yy]])
-        valueM[i][j], _ = np.linalg.eig(np.array([[xx, xy], [xy, yy]]))
+M[:, :, 0, 0] = np.reshape([x**2 for row in sobelx for x in row], (563, 558))
+M[:, :, 1, 1] = np.reshape([x**2 for row in sobely for x in row], (563, 558))
+M[:, :, 0, 1] = sobelxy[:, :]
+M[:, :, 1, 0] = M[:, :, 0, 1]
 
-        # 6. calculate R by R = l1*l2 - k(l1+l2)^2
-        l1 = valueM[i][j][0][0]
-        l2 = valueM[i][j][0][1]
-        R[i][j] = l1 * l2 - k * (l1 + l2) ** 2
+valueM, _ = np.linalg.eig(M[:][:])
+
+# 6. calculate R by R = l1*l2 - k(l1+l2)^2
+l1 = valueM[:, :, 0]
+l2 = valueM[:, :, 1]
+R[:, :] = l1 * l2 - k * (l1 + l2) ** 2
 
 # 7. use threshold to judge
+
 for i in range(o.shape[0]):
     for j in range(o.shape[1]):
         if R[i][j] > R.max() * 0.01:
             img[i][j] = (0, 0, 255)
-        # 极大化抑制
-        # if R[i,j] > R.max()*0.01 and R[i,j] == np.max(R[max(0,i-3):min(i+3,562),max(0,j-3):min(j+3,557)]):
-        #     img[i,j] = (0, 0, 255)
 
 print(R)
 
@@ -61,6 +59,6 @@ cv2.imshow("result", img)
 cv2.imshow("i", sobelx)
 cv2.imshow("y", sobely)
 cv2.imshow("xy", sobelxy)
-cv2.imwrite("sukodu_out1.png", img)
+cv2.imwrite("sukodu_out3.png", img)
 cv2.waitKey()
 cv2.destroyAllWindows()
