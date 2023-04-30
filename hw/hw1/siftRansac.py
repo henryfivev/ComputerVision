@@ -27,6 +27,7 @@ class Stitcher:
         result = cv2.warpPerspective(
             imageA, H, (imageA.shape[1] + imageB.shape[1], imageA.shape[0])
         )
+        print(H)
 
         # 将图片B传入result图片最左端
         result[0 : imageB.shape[0], 0 : imageB.shape[1]] = imageB
@@ -133,8 +134,8 @@ class Stitcher:
 
 # 主程序
 # 读取拼接图片
-imageA = cv2.imread("./images/1/yosemite3.jpg")
-imageB = cv2.imread("./images/1/yosemite4.jpg")
+imageA = cv2.imread("./images/1/uttower1.jpg")
+imageB = cv2.imread("./images/1/uttower2.jpg")
 
 # 把图片拼接成全景图
 stitcher = Stitcher()

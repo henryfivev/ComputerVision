@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 
 # 1. read img as gray scale image
-img = cv2.imread("../images/1/sudoku.png")
+# img = cv2.imread("../images/1/sudoku.png")
+# img = cv2.imread("../images/1/uttower1.jpg")
+img = cv2.imread("../images/1/uttower2.jpg")
 o = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # 2. get I_x and I_y with sobel
@@ -90,6 +92,6 @@ print(M[240][279])
 # cv2.imshow("x", sobelx)
 # cv2.imshow("y", sobely)
 # cv2.imshow("xy", sobelxy)
-cv2.imwrite("./output/sukodu_keypoint_final.png", img)
+cv2.imwrite("../result/uttower2_keypoints.jpg", img)
 cv2.waitKey()
 cv2.destroyAllWindows()
