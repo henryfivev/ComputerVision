@@ -68,10 +68,6 @@ dst_pts = np.float32([corners2[m.trainIdx] for m in matches])
 
 H, status = cv2.findHomography(corners2, corners2, cv2.RANSAC, 4)
 
-# H = np.array([[2.36470580e-01,-2.18636996e-02, 1.24031938e+02],
-#  [-1.68332639e+00, -1.64464864e-03, 7.40688021e+02],
-#  [-1.31477085e-03, -9.96169110e-05,  1.00000000e+00]]
-# )
 print(H)
 
 result = cv2.warpPerspective(
