@@ -35,11 +35,10 @@ def pca_image(data_raw, n_components):
     
 
     # 绘制原始图像和重构图像
-
-    # cv2.imwrite("./result/recovered_lena_top_{}.jpg".format(n_components), reconstructed_img)
-    # cv2.imshow('Reconstructed Image{}'.format(n_components), reconstructed_img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imwrite("./result/recovered_lena_top_{}.jpg".format(n_components), reconstructed_img)
+    cv2.imshow('Reconstructed Image{}'.format(n_components), reconstructed_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
