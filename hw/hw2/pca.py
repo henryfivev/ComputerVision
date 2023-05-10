@@ -1,6 +1,7 @@
-import numpy as np
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io import loadmat
 
 def pca_image(image, n_components):
     # 转换为灰度图像
@@ -40,9 +41,17 @@ def pca_image(image, n_components):
     plt.title('Reconstructed Image')
     plt.show()
 
-# 示例用法
-image = cv2.imread('image.jpg')
+if __name__ == "__main__":
+    # 示例用法
+    image = cv2.imread('image.jpg')
 
-# 应用PCA
-n_components = 50
-pca_image(image, n_components)
+    # 读取MAT文件
+    mat_data = loadmat('data.mat')
+
+    # 获取数据
+    data = mat_data['data']
+
+
+    # 应用PCA
+    n_components = 50
+    pca_image(image, n_components)
