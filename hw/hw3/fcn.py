@@ -5,27 +5,44 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import VOCSegmentation
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torchvision.models.segmentation import fcn_resnet50
+
+
 def get_dataloader(batch_size, num_workers):
-    transform = Compose([
-        ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+    transform = Compose(
+        [ToTensor(), Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+    )
 
-    trainset = VOCSegmentation(root='./data', year='2007', image_set='train', download=True, transform=transform)
-    testset = VOCSegmentation(root='./data', year='2007', image_set='val', download=True, transform=transform)
+    trainset = VOCSegmentation(
+        root="./data",
+        year="2007",
+        image_set="train",
+        download=True,
+        transform=transform,
+    )
+    testset = VOCSegmentation(
+        root="./data", year="2007", image_set="val", download=True, transform=transform
+    )
 
-    trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    testloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    trainloader = DataLoader(
+        trainset, batch_size=batch_size, shuffle=True, num_workers=num_workers
+    )
+    testloader = DataLoader(
+        testset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
 
     return trainloader, testloader
+
+
 class FCN8s(nn.Module):
     def __init__(self, num_classes):
         super(FCN8s, self).__init__()
         self.model = fcn_resnet50(pretrained=False, num_classes=num_classes)
 
     def forward(self, x):
-        x = self.model(x)['out']
+        x = self.model(x)["out"]
         return x
+
+
 def train(model, dataloader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
@@ -57,6 +74,7 @@ def test(model, dataloader, criterion, device):
 
     return running_loss / len(dataloader.dataset)
 
+
 # 运行主函数
 if __name__ == "__main__":
     # 设置随机种子
@@ -87,7 +105,9 @@ if __name__ == "__main__":
     for epoch in range(num_epochs):
         train_loss = train(model, trainloader, criterion, optimizer, device)
         test_loss = test(model, testloader, criterion, device)
-        print(f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}")
+        print(
+            f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {train_loss:.4f}, Test Loss: {test_loss:.4f}"
+        )
 
     # 保存模型
     torch.save(model.state_dict(), "fcn8s_model.pth")

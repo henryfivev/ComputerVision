@@ -261,6 +261,3 @@ if __name__ == "__main__":
     # 最终测试
     final_test_accuracy = test(model, dataloader_test, device)
     print(f"Final Test Accuracy: {final_test_accuracy * 100:.2f}%")
-
-
-
