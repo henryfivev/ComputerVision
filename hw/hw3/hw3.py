@@ -237,6 +237,7 @@ if __name__ == "__main__":
 
     # 将模型移至GPU（如果可用）
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
     model.to(device)
 
     # 定义优化器和损失函数
