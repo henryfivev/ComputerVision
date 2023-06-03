@@ -188,6 +188,7 @@ def train(
         loss = criterion(
             outputs_labeled, targets_labeled, outputs_unlabeled, targets_unlabeled
         )
+        print(loss)
         loss.backward()
         optimizer.step()
 
