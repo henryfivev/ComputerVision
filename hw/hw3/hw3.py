@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import numpy as np
+import itertools
 
 
 class WideResNet(nn.Module):
@@ -170,25 +171,34 @@ def train(
     model, dataloader_labeled, dataloader_unlabeled, optimizer, criterion, device
 ):
     model.train()
-    for (inputs_labeled, targets_labeled), (inputs_unlabeled, targets_unlabeled) in zip(
-        dataloader_labeled, dataloader_unlabeled
-    ):
-        inputs_labeled, targets_labeled = inputs_labeled.to(device), targets_labeled.to(
-            device
-        )
-        inputs_unlabeled, targets_unlabeled = inputs_unlabeled.to(
-            device
-        ), targets_unlabeled.to(device)
-
+    print("start train")
+    for (
+        (inputs_labeled, targets_labeled),
+        (inputs_unlabeled, targets_unlabeled),
+    ) in itertools.zip_longest(dataloader_labeled, dataloader_unlabeled):
+        print("unzip")
+        if inputs_labeled is not None:
+            inputs_labeled, targets_labeled = (
+                inputs_labeled.to(device),
+                targets_labeled.to(device),
+            )
+        if inputs_unlabeled is not None:
+            inputs_unlabeled, targets_unlabeled = (
+                inputs_unlabeled.to(device),
+                targets_unlabeled.to(device),
+            )
+        
+        print("already read data")
         optimizer.zero_grad()
 
         outputs_labeled = model(inputs_labeled)
         outputs_unlabeled = model(inputs_unlabeled)
-
+        print("already get output")
         loss = criterion(
             outputs_labeled, targets_labeled, outputs_unlabeled, targets_unlabeled
         )
-        print(loss)
+        print(device)
+        print("loss=", loss)
         loss.backward()
         optimizer.step()
 
@@ -219,7 +229,7 @@ if __name__ == "__main__":
 
     # 定义超参数
     batch_size = 64
-    num_workers = 4
+    num_workers = 1
     learning_rate = 0.001
     num_epochs = 100
 
@@ -227,11 +237,28 @@ if __name__ == "__main__":
     trainset, testset = get_cifar10()
 
     # 创建数据加载器
-    labeled_dataset = data.Subset(trainset, np.arange(1000))  # 使用1000个标记样本
-    unlabeled_dataset = data.Subset(trainset, np.arange(1000, len(trainset)))  # 使用未标记样本
-    dataloader_labeled = get_dataloader(labeled_dataset, batch_size, num_workers)
-    dataloader_unlabeled = get_dataloader(unlabeled_dataset, batch_size, num_workers)
+    labeled_dataset = data.Subset(trainset, np.arange(4000))  # 使用1000个标记样本
+    unlabeled_dataset = data.Subset(trainset, np.arange(4000, len(trainset)))  # 使用未标记样本
+    labeled_sampler = data.SubsetRandomSampler(np.arange(4000))
+    unlabeled_sampler = data.SubsetRandomSampler(np.arange(4000, len(trainset)))
+
+    dataloader_labeled = data.DataLoader(
+        labeled_dataset,
+        batch_size=batch_size,
+        sampler=labeled_sampler,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    dataloader_unlabeled = data.DataLoader(
+        unlabeled_dataset,
+        batch_size=batch_size,
+        sampler=unlabeled_sampler,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
     dataloader_test = get_dataloader(testset, batch_size, num_workers)
+    print(dataloader_labeled)
+    print(dataloader_unlabeled)
 
     # 创建模型
     model = WideResNet(num_classes=10, depth=28, widen_factor=2)
@@ -263,3 +290,4 @@ if __name__ == "__main__":
     # 最终测试
     final_test_accuracy = test(model, dataloader_test, device)
     print(f"Final Test Accuracy: {final_test_accuracy * 100:.2f}%")
+

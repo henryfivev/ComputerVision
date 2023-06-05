@@ -57,6 +57,7 @@ def main(args):
     ngpus_per_node = torch.cuda.device_count()  # number of gpus of each node
 
     if args.multiprocessing_distributed:
+        print("we are multi pro dist")
         # now, args.world_size means num of total processes in all nodes
         args.world_size = ngpus_per_node * args.world_size
 
@@ -70,7 +71,7 @@ def main_worker(gpu, ngpus_per_node, args):
     '''
     main_worker is conducted on each GPU.
     '''
-
+    print("main worker")
     global best_acc1
     args.gpu = gpu
 
@@ -80,7 +81,7 @@ def main_worker(gpu, ngpus_per_node, args):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     cudnn.deterministic = True
-
+    print("random seed")
     # SET UP FOR DISTRIBUTED TRAINING
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
@@ -91,7 +92,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # set distributed group:
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
-
+    print("path and logger")
     # SET save_path and logger
     save_path = os.path.join(args.save_dir, args.save_name)
     logger_level = "WARNING"
@@ -119,7 +120,7 @@ def main_worker(gpu, ngpus_per_node, args):
                                     'use_embed': False,
                                     'is_remix': False},
                                    )
-
+    print("create model")
     model = FixMatch(_net_builder,
                      args.num_classes,
                      args.ema_m,
