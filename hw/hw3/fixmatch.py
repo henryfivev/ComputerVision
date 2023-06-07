@@ -147,7 +147,7 @@ def main():
         fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device)
     
     # 保存模型
-    torch.save(model.state_dict(), 'fixmatch_model.pt')
+    torch.save(model.state_dict(), './save_model/fixmatch_model.pt')
 
 if __name__ == '__main__':
     main()
