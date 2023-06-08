@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import transforms, datasets
+from torch.utils.data import Subset, DataLoader
 
 # 定义模型
 class MyModel(nn.Module):
@@ -75,6 +76,22 @@ def mixmatch(model, labeled_data, unlabeled_data, num_classes, T, K, alpha):
     total_loss.backward()
     optimizer.step()
 
+# 定义验证函数
+def evaluate(model, data_loader):
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in data_loader:
+            images, labels = data
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    accuracy = correct / total
+    return accuracy
+
 # 参数设置
 num_classes = 10  # 类别数
 T = 0.5  # 温度参数
@@ -93,10 +110,18 @@ transform = transforms.Compose([
 train_dataset = datasets.CIFAR10(root="./data", train=True, transform=transform, download=True)
 train_labeled_idxs = torch.randperm(len(train_dataset))[:1000]  # 选取部分标记数据
 train_unlabeled_idxs = torch.randperm(len(train_dataset))[1000:]  # 剩余未标记数据
-train_labeled_dataset = torch.utils.data.Subset(train_dataset, train_labeled_idxs)
-train_unlabeled_dataset = torch.utils.data.Subset(train_dataset, train_unlabeled_idxs)
-train_labeled_loader = torch.utils.data.DataLoader(train_labeled_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
-train_unlabeled_loader = torch.utils.data.DataLoader(train_unlabeled_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+train_labeled_dataset = Subset(train_dataset, train_labeled_idxs)
+train_unlabeled_dataset = Subset(train_dataset, train_unlabeled_idxs)
+train_labeled_loader = DataLoader(train_labeled_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+train_unlabeled_loader = DataLoader(train_unlabeled_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+
+# 加载验证集数据
+validation_dataset = datasets.CIFAR10(root="./data", train=False, transform=transform, download=True)
+validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
+
+# 加载测试集数据
+test_dataset = datasets.CIFAR10(root="./data", train=False, transform=transform, download=True)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 # 初始化模型、优化器等
 model = MyModel().to(device)
@@ -119,6 +144,10 @@ for epoch in range(num_epochs):
         
         mixmatch(model, (labeled_x, labeled_y), unlabeled_x, num_classes, T, K, alpha)
     
-    # 在验证集上进行评估等操作
-
+    # 在验证集上进行评估
+    accuracy = evaluate(model, validation_loader)
+    print(f"Validation Accuracy: {accuracy}")
+    
 # 最后进行模型评估或测试
+accuracy = evaluate(model, test_loader)
+print(f"Test Accuracy: {accuracy}")

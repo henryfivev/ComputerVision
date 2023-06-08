@@ -5,33 +5,21 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 from torch.utils.data import Subset
+from torchvision.models import wide_resnet50_2
 
 # 设置随机种子
 torch.manual_seed(42)
 
-# 定义模型
+# 模型定义
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=10):
         super(Model, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-        self.fc = nn.Sequential(
-            nn.Linear(128 * 8 * 8, 512),
-            nn.ReLU(),
-            nn.Linear(512, 10)
-        )
-        
+        self.model = wide_resnet28_2(pretrained=False)
+        num_filters = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_filters, num_classes)
+    
     def forward(self, x):
-        x = self.conv(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
+        return self.model(x)
 
 # 定义弱增强函数
 def weak_augmentation(image):
@@ -111,47 +99,75 @@ def fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device):
         optimizer.step()
         # print("update model")
 
+# 定义验证函数
+def evaluate(model, dataloader, device):
+    model.eval()
+    correct = 0
+    total = 0
+    
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    
+    accuracy = 100 * correct / total
+    return accuracy
 
 # 主函数
 def main():
     # 设置设备
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("device:", device)
+    
     # 加载CIFAR-10数据集
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     train_dataset = CIFAR10(root='./data', train=True, download=True, transform=transform)
+    test_dataset = CIFAR10(root='./data', train=False, download=True, transform=transform)
     
-    # 划分有标签和无标签数据集
+    # 划分有标签、无标签、验证和测试数据集
     labeled_indices = torch.arange(5000)
     unlabeled_indices = torch.arange(5000, len(train_dataset))
+    val_indices = torch.arange(10000, 15000)
     
     labeled_dataset = Subset(train_dataset, labeled_indices)
     unlabeled_dataset = Subset(train_dataset, unlabeled_indices)
+    val_dataset = Subset(train_dataset, val_indices)
     
     # 创建数据加载器
-    labeled_loader = DataLoader(labeled_dataset, batch_size=16, shuffle=True, num_workers=0)
-    unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=16, shuffle=True, num_workers=0)
+    labeled_loader = DataLoader(labeled_dataset, batch_size=64, shuffle=True, num_workers=4)
+    unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=64, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=4)
     
     # 创建模型
     model = Model().to(device)
-    print("init model")
     
     # 定义优化器
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     # 进行FixMatch训练
-    for epoch in range(2):
+    for epoch in range(10):
         fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device)
+        
+        # 在每个epoch结束后评估模型性能
+        val_accuracy = evaluate(model, val_loader, device)
+        print(f"Epoch {epoch+1}, Validation Accuracy: {val_accuracy:.2f}%")
+    
+    # 在测试集上评估模型性能
+    test_accuracy = evaluate(model, test_loader, device)
+    print(f"Test Accuracy: {test_accuracy:.2f}%")
     
     # 保存模型
-    torch.save(model.state_dict(), './save_model/fixmatch_model.pt')
+    torch.save(model.state_dict(), 'fixmatch_model.pt')
 
 if __name__ == '__main__':
     main()
 
     # 记录loss
-    # 计算准确率
+    # 计算准确率done
     # 修改网络架构
