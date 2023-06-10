@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import VOCSegmentation
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torchvision.models.segmentation import fcn_resnet50
-
+import torchvision.transforms.functional as F
+from PIL import Image
 
 def get_dataloader(batch_size, num_workers):
     transform = Compose(
@@ -74,6 +75,14 @@ def test(model, dataloader, criterion, device):
 
     return running_loss / len(dataloader.dataset)
 
+def save_segmentation_result(image, labels, output_path):
+    palette = labels.getpalette()
+    labels = labels.convert("P")
+    labels.putpalette(palette)
+    labels = labels.resize(image.size)
+
+    result = Image.blend(image, labels, alpha=0.5)
+    result.save(output_path)
 
 # 运行主函数
 if __name__ == "__main__":
@@ -111,3 +120,19 @@ if __name__ == "__main__":
 
     # 保存模型
     torch.save(model.state_dict(), "fcn8s_model.pth")
+
+    # 在测试循环中保存语义分割结果
+    for images, _ in testloader:
+        images = images.to(device)
+        outputs = model(images)
+        _, predicted = torch.max(outputs, 1)
+
+        for i in range(images.size(0)):
+            image = images[i].cpu()
+            label = predicted[i].cpu()
+
+            image = F.to_pil_image(image)
+            label = F.to_pil_image(label)
+
+            # 保存语义分割结果
+            save_segmentation_result(image, label, f"result_{i}.png")
