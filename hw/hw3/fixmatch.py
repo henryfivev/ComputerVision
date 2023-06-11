@@ -11,15 +11,68 @@ from torchvision.models import wide_resnet50_2
 torch.manual_seed(42)
 
 # 模型定义
-class Model(nn.Module):
-    def __init__(self, num_classes=10):
-        super(Model, self).__init__()
-        self.model = wide_resnet28_2(pretrained=False)
-        num_filters = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_filters, num_classes)
-    
+class BasicBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride):
+        super(BasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+
     def forward(self, x):
-        return self.model(x)
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        out += self.shortcut(residual)
+        out = self.relu(out)
+
+        return out
+
+class WideResNet(nn.Module):
+    def __init__(self, depth, widen_factor, num_classes):
+        super(WideResNet, self).__init__()
+        self.in_channels = 16
+        self.conv1 = nn.Conv2d(3, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.layer1 = self._make_layer(16 * widen_factor, depth)
+        self.layer2 = self._make_layer(32 * widen_factor, depth, stride=2)
+        self.layer3 = self._make_layer(64 * widen_factor, depth, stride=2)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(64 * widen_factor, num_classes)
+
+    def _make_layer(self, out_channels, blocks, stride=1):
+        layers = [BasicBlock(self.in_channels, out_channels, stride)]
+        self.in_channels = out_channels
+        for _ in range(1, blocks):
+            layers.append(BasicBlock(out_channels, out_channels, stride=1))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.avgpool(out)
+        out = torch.flatten(out, 1)
+        out = self.fc(out)
+        return out
 
 # 定义弱增强函数
 def weak_augmentation(image):
@@ -55,7 +108,7 @@ def fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device):
     labeled_iter = iter(labeled_loader)
     unlabeled_iter = iter(unlabeled_loader)
     num_iterations = min(len(labeled_iter), len(unlabeled_iter))
-    print("get data iterator")
+    # print("get data iterator")
 
     for i in range(num_iterations):
         # 加载有标签数据
@@ -92,6 +145,7 @@ def fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device):
         
         # 总损失
         loss = labeled_loss + unlabeled_loss
+        print("loss=", loss) 
 
         # 更新模型参数
         optimizer.zero_grad()
@@ -139,19 +193,19 @@ def main():
     val_dataset = Subset(train_dataset, val_indices)
     
     # 创建数据加载器
-    labeled_loader = DataLoader(labeled_dataset, batch_size=64, shuffle=True, num_workers=4)
-    unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=64, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=4)
+    labeled_loader = DataLoader(labeled_dataset, batch_size=32, shuffle=True, num_workers=0)
+    unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=32, shuffle=True, num_workers=0)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=0)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=0)
     
     # 创建模型
-    model = Model().to(device)
+    model = WideResNet(depth=28, widen_factor=2, num_classes=10).to(device)
     
     # 定义优化器
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     # 进行FixMatch训练
-    for epoch in range(10):
+    for epoch in range(50):
         fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device)
         
         # 在每个epoch结束后评估模型性能
@@ -163,7 +217,7 @@ def main():
     print(f"Test Accuracy: {test_accuracy:.2f}%")
     
     # 保存模型
-    torch.save(model.state_dict(), 'fixmatch_model.pt')
+    torch.save(model.state_dict(), './save_model/fixmatch_model.pt')
 
 if __name__ == '__main__':
     main()
