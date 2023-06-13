@@ -205,7 +205,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     # 进行FixMatch训练
-    for epoch in range(50):
+    for epoch in range(25):
         fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device)
         
         # 在每个epoch结束后评估模型性能
