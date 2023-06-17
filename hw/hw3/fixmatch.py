@@ -222,6 +222,6 @@ def main():
 if __name__ == '__main__':
     main()
 
-    # 记录loss
+    print("记录loss")
     # 计算准确率done
-    # 修改网络架构
+    # 修改网络架构done

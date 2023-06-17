@@ -146,19 +146,20 @@ K = 2  # 数据增强次数
 alpha = 0.75  # 损失函数权重参数
 threshold = 0.95  # 选择 MixMatch 样本的阈值
 batch_size = 32
-num_epochs = 100
+num_epochs = 50
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 运行主函数
 if __name__ == "__main__":
+    print("loss可视化")
     # 数据加载
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     train_dataset = datasets.CIFAR10(root="./data", train=True, transform=transform, download=True)
-    train_labeled_idxs = torch.randperm(len(train_dataset))[:4000]  # 选取部分标记数据
-    train_unlabeled_idxs = torch.randperm(len(train_dataset))[4000:]  # 剩余未标记数据
+    train_labeled_idxs = torch.randperm(len(train_dataset))[:1000]  # 选取部分标记数据
+    train_unlabeled_idxs = torch.randperm(len(train_dataset))[1000:]  # 剩余未标记数据
     train_labeled_dataset = Subset(train_dataset, train_labeled_idxs)
     train_unlabeled_dataset = Subset(train_dataset, train_unlabeled_idxs)
     train_labeled_loader = DataLoader(train_labeled_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
         model.train()
         labeled_data_iter = iter(train_labeled_loader)
         unlabeled_data_iter = iter(train_unlabeled_loader)
-        print("epoch=", epoch)
+        print("epoch", epoch)
         
         for batch_idx, (labeled_x, labeled_y) in enumerate(labeled_data_iter):
             try:
