@@ -85,9 +85,9 @@ def get_dataloader(batch_size, num_workers):
         target_transform=transform2  # 新增的标签转换步骤
     )
     testset = VOCSegmentation(
-        root="./data",
+        root="./data2",
         year="2007",
-        image_set="val",
+        image_set="test",
         download=False,
         transform=transform,
         target_transform=transform2,  # 新增的标签转换步骤
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
 
     # 定义超参数
-    batch_size = 4
+    batch_size = 2
     num_workers = 0
     learning_rate = 0.0001
     num_epochs = 1
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     # 创建模型并将模型移至GPU（如果可用）
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = fcn_resnet101(pretrained=True).to(device).eval()
-
+    j = 0
     # 在测试循环中保存语义分割结果
     for images, _ in testloader:
         images = images.to(device)
@@ -144,7 +144,11 @@ if __name__ == "__main__":
             label = torch.argmax(outputs[i], dim=0).detach().cpu().numpy()
             label_rgb = decode_segmap(label)
             print("label", label.shape)
+            print("type", type(label_rgb))
+            # cv2.imwrite(f'./result/{i}.png', label_rgb)
 
-            transforms.ToPILImage()(image).show()
+            # transforms.ToPILImage()(image).show()
             plt.imshow(label_rgb); 
-            plt.show()
+            plt.savefig(f'result/{j}.png')
+            j += 1
+            # plt.show()

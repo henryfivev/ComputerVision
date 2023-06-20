@@ -184,8 +184,8 @@ def main():
     test_dataset = CIFAR10(root='./data', train=False, download=True, transform=transform)
     
     # 划分有标签、无标签、验证和测试数据集
-    labeled_indices = torch.arange(5000)
-    unlabeled_indices = torch.arange(5000, len(train_dataset))
+    labeled_indices = torch.arange(40)
+    unlabeled_indices = torch.arange(40, len(train_dataset))
     val_indices = torch.arange(10000, 15000)
     
     labeled_dataset = Subset(train_dataset, labeled_indices)
@@ -202,10 +202,10 @@ def main():
     model = WideResNet(depth=28, widen_factor=2, num_classes=10).to(device)
     
     # 定义优化器
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     
     # 进行FixMatch训练
-    for epoch in range(25):
+    for epoch in range(60):
         fixmatch_train(model, labeled_loader, unlabeled_loader, optimizer, device)
         
         # 在每个epoch结束后评估模型性能
@@ -222,6 +222,6 @@ def main():
 if __name__ == '__main__':
     main()
 
-    print("记录loss")
+    # print("记录loss")
     # 计算准确率done
     # 修改网络架构done

@@ -15,7 +15,9 @@ from torchvision.models.segmentation import fcn_resnet50
 warnings.filterwarnings("ignore") # 忽略警告
 
 def read_voc_images(root="./data/VOCdevkit/VOC2007", is_train=True, max_num=None):
-    txt_fname = '%s/ImageSets/Segmentation/%s' % (root, 'train.txt' if is_train else 'val.txt')
+    if is_train == False:
+        root = "./data/VOCdevkit/VOC2007_test"
+    txt_fname = '%s/ImageSets/Segmentation/%s' % (root, 'train.txt' if is_train else 'test.txt')
     with open(txt_fname, 'r') as f:
         images = f.read().split() # 拆分成一个个名字组成list
     if max_num is not None:
@@ -42,9 +44,6 @@ def show_images(imgs, num_rows, num_cols, scale=2):
 # 根据自己存放数据集的路径修改voc_dir
 voc_dir = r"./data/VOCdevkit/VOC2007"
 train_features, train_labels = read_voc_images(voc_dir, max_num=10)
-n = 5 # 展示几张图像
-imgs = train_features[0:n] + train_labels[0:n] # PIL image
-show_images(imgs, 2, n)
 
 # 标签中每个RGB颜色的值
 VOC_COLORMAP = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
@@ -89,11 +88,7 @@ def voc_rand_crop(feature, label, height, width):
     label = torchvision.transforms.functional.crop(label, i, j, h, w)
     return feature, label
 
-# 显示n张随机裁剪的图像和标签，前面的n是5
-imgs = []
-for _ in range(n):
-    imgs += voc_rand_crop(train_features[0], train_labels[0], 200, 300)
-show_images(imgs[::2] + imgs[1::2], 2, n)
+
 
 class VOCSegDataset(torch.utils.data.Dataset):
     def __init__(self, is_train, crop_size, voc_dir, colormap2label, max_num=None):
@@ -223,13 +218,16 @@ def predict(img, model):
 
 def evaluate(model:nn.Module):
     model.eval()
-    test_images, test_labels = read_voc_images(voc_dir, is_train=False, max_num=10) 
+    test_images, test_labels = read_voc_images(voc_dir, is_train=False) 
     n, imgs = 4, []
-    for i in range(n):
-        xi, yi = voc_rand_crop(test_images[i], test_labels[i], 320, 480) # Image
+    for i in range(10):
+        xi, yi = voc_rand_crop(test_images[i], test_labels[i], 224, 224) # Image
         pred = label2image(predict(xi, model))
         imgs += [xi, pred, yi]
-    show_images(imgs[::3] + imgs[1::3] + imgs[2::3], 3, n)
+        plt.imshow(pred)
+        plt.savefig(f'result/trained/{i}.png')
+        # plt.show()
+    print("finished")
 
 # 开始测试
 evaluate(model_ft)
