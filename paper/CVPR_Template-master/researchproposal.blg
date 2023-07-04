@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2020/W32TeX)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: researchproposal.aux
+The style file: plain.bst
+Database file #1: ref.bib
+Repeated entry---line 305 of file ref.bib
+ : @inproceedings{deshpande2019fast
+ :                                 ,
+I'm skipping whatever remains of this entry
+You've used 22 entries,
+            2118 wiz_defined-function locations,
+            601 strings with 8516 characters,
+and the built_in function-call counts, 11641 in all, are:
+= -- 1137
+> -- 621
+< -- 17
++ -- 245
+- -- 222
+* -- 801
+:= -- 1732
+add.period$ -- 66
+call.type$ -- 22
+change.case$ -- 176
+chr.to.int$ -- 0
+cite$ -- 22
+duplicate$ -- 472
+empty$ -- 839
+format.name$ -- 222
+if$ -- 2551
+int.to.chr$ -- 0
+int.to.str$ -- 22
+missing$ -- 22
+newline$ -- 113
+num.names$ -- 44
+pop$ -- 225
+preamble$ -- 1
+purify$ -- 154
+quote$ -- 0
+skip$ -- 421
+stack$ -- 0
+substring$ -- 806
+swap$ -- 222
+text.length$ -- 17
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 88
+warning$ -- 0
+while$ -- 97
+width$ -- 24
+write$ -- 240
+(There was 1 error message)
